@@ -7,6 +7,14 @@ import {
   Link2,
   ShoppingBag,
   Settings,
+  Briefcase,
+  MessageCircle,
+  BookImage,
+  CalendarDays,
+  Tag,
+  FileSignature,
+  Star,
+  BarChart3,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { Avatar } from '@/components/ui/Avatar'
@@ -38,9 +46,22 @@ export function PhoneHome() {
     { to: '/app/card', icon: CreditCard, label: 'My Card' },
     { to: '/app/gallery', icon: ImageIcon, label: 'Gallery' },
     ...(isBrand
-      ? [{ to: '/app/catalog', icon: ShoppingBag, label: 'Catalog' }]
-      : [{ to: '/app/portfolio', icon: LayoutGrid, label: 'Portfolio' }]),
+      ? [
+          { to: '/app/catalog', icon: ShoppingBag, label: 'Catalog' },
+          { to: '/app/campaigns', icon: Briefcase, label: 'Campaigns' },
+        ]
+      : [
+          { to: '/app/portfolio', icon: LayoutGrid, label: 'Portfolio' },
+          { to: '/app/lookbooks', icon: BookImage, label: 'Lookbooks' },
+          { to: '/app/opportunities', icon: Briefcase, label: 'Opportunities' },
+          { to: '/app/rates', icon: Tag, label: 'Rates & Kit' },
+          { to: '/app/availability', icon: CalendarDays, label: 'Availability' },
+        ]),
     { to: '/app/collaborations', icon: Handshake, label: 'Collaborations' },
+    { to: '/app/reviews', icon: Star, label: 'Reviews' },
+    { to: '/app/bookings', icon: FileSignature, label: 'Bookings' },
+    { to: '/app/messages', icon: MessageCircle, label: 'Messages' },
+    { to: '/app/analytics', icon: BarChart3, label: 'Analytics' },
     { to: '/app/links', icon: Link2, label: 'Links' },
     { to: '/app/settings', icon: Settings, label: 'Settings' },
   ]

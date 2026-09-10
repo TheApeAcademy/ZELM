@@ -1,9 +1,26 @@
 import { supabase } from './supabase'
 import type {
+  Account,
+  ApplicationWithPerson,
+  AudienceStat,
+  AvailabilityDay,
+  BookingWithParties,
   BrandIdentity,
+  Campaign,
+  CampaignWithBrand,
   CollaborationWithParties,
+  Contract,
+  ConversationWithParticipants,
   DiscoveryAccount,
+  InvitationWithCampaign,
+  Lookbook,
+  MediaItem,
+  MediaProductTag,
+  Message,
+  PaymentRequest,
   PersonIdentity,
+  Rate,
+  Review,
 } from './types'
 
 /** Resolves a public zelm.com/username page — either a person or a brand. */
@@ -152,4 +169,341 @@ export async function searchAccounts(filters: DiscoveryFilters): Promise<Discove
     rows = rows.filter((r) => r.person_profiles?.availability === filters.availability)
   }
   return rows
+}
+
+// ============================================================
+// OPPORTUNITIES: campaigns, applications, invitations
+// ============================================================
+
+export interface OpportunityFilters {
+  role?: string
+  location?: string
+}
+
+export async function fetchOpenCampaigns(filters: OpportunityFilters = {}): Promise<CampaignWithBrand[]> {
+  let q = supabase
+    .from('campaigns')
+    .select('*, brand:accounts!campaigns_brand_account_id_fkey(*)')
+    .eq('status', 'open')
+  if (filters.location) q = q.ilike('location', `%${filters.location}%`)
+  const { data } = await q.order('created_at', { ascending: false })
+  let rows = (data ?? []) as unknown as CampaignWithBrand[]
+  if (filters.role) rows = rows.filter((c) => c.talent_types.includes(filters.role as never))
+  return rows
+}
+
+export async function fetchBrandCampaigns(brandAccountId: string): Promise<Campaign[]> {
+  const { data } = await supabase
+    .from('campaigns')
+    .select('*')
+    .eq('brand_account_id', brandAccountId)
+    .order('created_at', { ascending: false })
+  return data ?? []
+}
+
+export async function fetchCampaign(id: string): Promise<CampaignWithBrand | null> {
+  const { data } = await supabase
+    .from('campaigns')
+    .select('*, brand:accounts!campaigns_brand_account_id_fkey(*)')
+    .eq('id', id)
+    .maybeSingle()
+  return (data as unknown as CampaignWithBrand) ?? null
+}
+
+export async function fetchCampaignApplications(campaignId: string): Promise<ApplicationWithPerson[]> {
+  const { data } = await supabase
+    .from('campaign_applications')
+    .select('*, person:accounts!campaign_applications_person_account_id_fkey(*)')
+    .eq('campaign_id', campaignId)
+    .order('created_at', { ascending: false })
+  return (data ?? []) as unknown as ApplicationWithPerson[]
+}
+
+export async function fetchMyApplications(personAccountId: string) {
+  const { data } = await supabase
+    .from('campaign_applications')
+    .select('*, campaign:campaigns(*, brand:accounts!campaigns_brand_account_id_fkey(*))')
+    .eq('person_account_id', personAccountId)
+    .order('created_at', { ascending: false })
+  return (data ?? []) as unknown as (ApplicationWithPerson & { campaign: CampaignWithBrand })[]
+}
+
+export async function fetchMyInvitations(personAccountId: string): Promise<InvitationWithCampaign[]> {
+  const { data } = await supabase
+    .from('campaign_invitations')
+    .select('*, campaign:campaigns(*, brand:accounts!campaigns_brand_account_id_fkey(*))')
+    .eq('person_account_id', personAccountId)
+    .order('created_at', { ascending: false })
+  return (data ?? []) as unknown as InvitationWithCampaign[]
+}
+
+// ============================================================
+// MESSAGING
+// ============================================================
+
+export async function fetchConversations(accountId: string): Promise<ConversationWithParticipants[]> {
+  const { data: participantRows } = await supabase
+    .from('conversation_participants')
+    .select('conversation_id')
+    .eq('account_id', accountId)
+  const ids = (participantRows ?? []).map((r) => r.conversation_id)
+  if (ids.length === 0) return []
+
+  const { data } = await supabase
+    .from('conversations')
+    .select('*, conversation_participants(account:accounts(*))')
+    .in('id', ids)
+    .order('created_at', { ascending: false })
+  return (data ?? []) as unknown as ConversationWithParticipants[]
+}
+
+export async function fetchMessages(conversationId: string): Promise<Message[]> {
+  const { data } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('conversation_id', conversationId)
+    .order('created_at')
+  return data ?? []
+}
+
+export async function findOrCreateConversation(selfId: string, otherId: string): Promise<string> {
+  const { data: mine } = await supabase
+    .from('conversation_participants')
+    .select('conversation_id')
+    .eq('account_id', selfId)
+  const { data: theirs } = await supabase
+    .from('conversation_participants')
+    .select('conversation_id')
+    .eq('account_id', otherId)
+
+  const mineIds = new Set((mine ?? []).map((r) => r.conversation_id))
+  const shared = (theirs ?? []).find((r) => mineIds.has(r.conversation_id))
+  if (shared) return shared.conversation_id
+
+  const { data: conversation, error } = await supabase
+    .from('conversations')
+    .insert({})
+    .select('id')
+    .single()
+  if (error || !conversation) throw error ?? new Error('Could not start conversation')
+
+  await supabase.from('conversation_participants').insert([
+    { conversation_id: conversation.id, account_id: selfId },
+    { conversation_id: conversation.id, account_id: otherId },
+  ])
+  return conversation.id
+}
+
+// ============================================================
+// AVAILABILITY CALENDAR
+// ============================================================
+
+export async function fetchAvailabilityDays(accountId: string): Promise<AvailabilityDay[]> {
+  const { data } = await supabase
+    .from('availability_days')
+    .select('*')
+    .eq('account_id', accountId)
+    .gte('day', new Date().toISOString().slice(0, 10))
+    .order('day')
+  return data ?? []
+}
+
+// ============================================================
+// LOOKBOOKS
+// ============================================================
+
+export async function fetchLookbooks(accountId: string): Promise<Lookbook[]> {
+  const { data } = await supabase
+    .from('lookbooks')
+    .select('*')
+    .eq('account_id', accountId)
+    .order('created_at', { ascending: false })
+  return data ?? []
+}
+
+export async function fetchLookbookBySlug(
+  slug: string,
+): Promise<{ lookbook: Lookbook; account: Account; media: MediaItem[] } | null> {
+  const { data: lookbook } = await supabase
+    .from('lookbooks')
+    .select('*')
+    .ilike('share_slug', slug)
+    .maybeSingle()
+  if (!lookbook) return null
+
+  const [{ data: account }, { data: items }] = await Promise.all([
+    supabase.from('accounts').select('*').eq('id', lookbook.account_id).single(),
+    supabase
+      .from('lookbook_items')
+      .select('sort_order, media:media_items(*)')
+      .eq('lookbook_id', lookbook.id)
+      .order('sort_order'),
+  ])
+
+  const media = ((items ?? []) as unknown as { media: MediaItem }[]).map((i) => i.media)
+  return { lookbook, account: account!, media }
+}
+
+// ============================================================
+// REVIEWS
+// ============================================================
+
+export async function fetchReviews(accountId: string): Promise<Review[]> {
+  const { data } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('reviewee_account_id', accountId)
+    .order('created_at', { ascending: false })
+  return data ?? []
+}
+
+export async function fetchReviewableCollaborations(
+  accountId: string,
+): Promise<CollaborationWithParties[]> {
+  const all = await fetchCollaborations(accountId)
+  const { data: existing } = await supabase
+    .from('reviews')
+    .select('collaboration_id')
+    .eq('reviewer_account_id', accountId)
+  const reviewed = new Set((existing ?? []).map((r) => r.collaboration_id))
+  return all.filter((c) => c.status === 'verified' && !reviewed.has(c.id))
+}
+
+// ============================================================
+// RATES + MEDIA KIT
+// ============================================================
+
+export async function fetchRates(accountId: string): Promise<Rate[]> {
+  const { data } = await supabase.from('rates').select('*').eq('account_id', accountId).order('sort_order')
+  return data ?? []
+}
+
+export async function fetchAudienceStats(accountId: string): Promise<AudienceStat[]> {
+  const { data } = await supabase.from('audience_stats').select('*').eq('account_id', accountId)
+  return data ?? []
+}
+
+export async function fetchMediaKitData(username: string) {
+  const result = await fetchIdentityByUsername(username)
+  if (!result) return null
+  const [rates, audience, collaborations, reviews] = await Promise.all([
+    fetchRates(result.identity.account.id),
+    fetchAudienceStats(result.identity.account.id),
+    fetchCollaborations(result.identity.account.id),
+    fetchReviews(result.identity.account.id),
+  ])
+  return { result, rates, audience, collaborations, reviews }
+}
+
+// ============================================================
+// BOOKINGS + CONTRACTS + PAYMENT TRACKING
+// ============================================================
+
+export async function fetchBookings(accountId: string): Promise<BookingWithParties[]> {
+  const { data } = await supabase
+    .from('bookings')
+    .select('*, person:accounts!bookings_person_account_id_fkey(*), brand:accounts!bookings_brand_account_id_fkey(*)')
+    .or(`person_account_id.eq.${accountId},brand_account_id.eq.${accountId}`)
+    .order('created_at', { ascending: false })
+  return (data ?? []) as unknown as BookingWithParties[]
+}
+
+export async function fetchContract(bookingId: string): Promise<Contract | null> {
+  const { data } = await supabase.from('contracts').select('*').eq('booking_id', bookingId).maybeSingle()
+  return data ?? null
+}
+
+export async function fetchPaymentRequests(bookingId: string): Promise<PaymentRequest[]> {
+  const { data } = await supabase
+    .from('payment_requests')
+    .select('*')
+    .eq('booking_id', bookingId)
+    .order('created_at', { ascending: false })
+  return data ?? []
+}
+
+// ============================================================
+// REPUTATION
+// ============================================================
+
+export interface Reputation {
+  verifiedCollaborations: number
+  distinctBrandsOrTalent: number
+  averageRating: number | null
+  reviewCount: number
+}
+
+export async function computeReputation(accountId: string): Promise<Reputation> {
+  const [collaborations, reviews] = await Promise.all([
+    fetchCollaborations(accountId),
+    fetchReviews(accountId),
+  ])
+  const verified = collaborations.filter((c) => c.status === 'verified')
+  const counterpartIds = new Set(
+    verified.map((c) => (c.person_account_id === accountId ? c.brand_account_id : c.person_account_id)),
+  )
+  const averageRating =
+    reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : null
+
+  return {
+    verifiedCollaborations: verified.length,
+    distinctBrandsOrTalent: counterpartIds.size,
+    averageRating,
+    reviewCount: reviews.length,
+  }
+}
+
+// ============================================================
+// ANALYTICS
+// ============================================================
+
+export async function logView(
+  subjectType: 'profile' | 'card' | 'catalog' | 'product' | 'campaign',
+  subjectAccountId: string,
+  subjectId: string | null,
+  viewerAccountId: string | null,
+) {
+  await supabase.from('view_events').insert({
+    subject_type: subjectType,
+    subject_account_id: subjectAccountId,
+    subject_id: subjectId,
+    viewer_account_id: viewerAccountId,
+  })
+}
+
+export async function fetchViewCounts(accountId: string) {
+  const { data } = await supabase
+    .from('view_events')
+    .select('subject_type')
+    .eq('subject_account_id', accountId)
+  const counts: Record<string, number> = {}
+  for (const row of data ?? []) {
+    counts[row.subject_type] = (counts[row.subject_type] ?? 0) + 1
+  }
+  return counts
+}
+
+// ============================================================
+// PRODUCT TAGGING
+// ============================================================
+
+export interface TaggedProduct {
+  id: string
+  name: string
+  price_amount: number | null
+  price_currency: string
+  brand_account_id: string
+  brand: { username: string }
+}
+
+export async function fetchProductTags(
+  mediaId: string,
+): Promise<(MediaProductTag & { product: TaggedProduct })[]> {
+  const { data } = await supabase
+    .from('media_product_tags')
+    .select(
+      '*, product:products(id, name, price_amount, price_currency, brand_account_id, brand:accounts!products_brand_account_id_fkey(username))',
+    )
+    .eq('media_id', mediaId)
+  return (data ?? []) as unknown as (MediaProductTag & { product: TaggedProduct })[]
 }

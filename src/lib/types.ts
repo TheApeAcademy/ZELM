@@ -26,6 +26,65 @@ export interface CollaborationWithParties extends Collaboration {
   brand: Account
 }
 
+export type CampaignStatus = Database['public']['Enums']['campaign_status']
+export type ApplicationStatus = Database['public']['Enums']['application_status']
+export type InvitationStatus = Database['public']['Enums']['invitation_status']
+export type BookingStatus = Database['public']['Enums']['booking_status']
+export type PaymentRequestStatus = Database['public']['Enums']['payment_request_status']
+export type ViewSubjectKind = Database['public']['Enums']['view_subject']
+
+export type Campaign = Database['public']['Tables']['campaigns']['Row']
+export type CampaignApplication = Database['public']['Tables']['campaign_applications']['Row']
+export type CampaignInvitation = Database['public']['Tables']['campaign_invitations']['Row']
+export type Conversation = Database['public']['Tables']['conversations']['Row']
+export type ConversationParticipant = Database['public']['Tables']['conversation_participants']['Row']
+export type Message = Database['public']['Tables']['messages']['Row']
+export type AvailabilityDay = Database['public']['Tables']['availability_days']['Row']
+export type Lookbook = Database['public']['Tables']['lookbooks']['Row']
+export type LookbookItem = Database['public']['Tables']['lookbook_items']['Row']
+export type Review = Database['public']['Tables']['reviews']['Row']
+export type Rate = Database['public']['Tables']['rates']['Row']
+export type AudienceStat = Database['public']['Tables']['audience_stats']['Row']
+export type Booking = Database['public']['Tables']['bookings']['Row']
+export type Contract = Database['public']['Tables']['contracts']['Row']
+export type PaymentRequest = Database['public']['Tables']['payment_requests']['Row']
+export type MediaProductTag = Database['public']['Tables']['media_product_tags']['Row']
+
+export interface CampaignWithBrand extends Campaign {
+  brand: Account
+}
+export interface ApplicationWithPerson extends CampaignApplication {
+  person: Account
+}
+export interface InvitationWithCampaign extends CampaignInvitation {
+  campaign: CampaignWithBrand
+}
+export interface ConversationWithParticipants extends Conversation {
+  conversation_participants: { account: Account }[]
+}
+export interface BookingWithParties extends Booking {
+  person: Account
+  brand: Account
+}
+
+export const CAMPAIGN_STATUS_LABEL: Record<CampaignStatus, string> = {
+  draft: 'Draft',
+  open: 'Open',
+  closed: 'Closed',
+}
+
+export const RATE_SERVICES = [
+  'Photoshoot',
+  'Campaign',
+  'UGC',
+  'Social post',
+  'Event',
+  'Runway',
+  'Brand ambassador',
+  'Video',
+  'Editorial',
+] as const
+
 /** A fully-loaded person account, as read on a public profile page. */
 export interface PersonIdentity {
   account: Account

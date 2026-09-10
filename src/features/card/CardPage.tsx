@@ -2,19 +2,27 @@ import { useParams, Navigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { QRCodeSVG } from 'qrcode.react'
 import { Share2, Copy, ArrowLeft } from 'lucide-react'
-import { useState } from 'react'
-import { fetchIdentityByUsername, resolveCardPhotoPath } from '@/lib/api'
+import { useEffect, useState } from 'react'
+import { fetchIdentityByUsername, logView, resolveCardPhotoPath } from '@/lib/api'
 import { DigitalCard } from './DigitalCard'
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/layout/Logo'
+import { useAuth } from '@/lib/auth'
 
 export function CardPage() {
   const { username } = useParams<{ username: string }>()
+  const { account: viewer } = useAuth()
   const { data: result, isLoading } = useQuery({
     queryKey: ['identity', username],
     queryFn: () => fetchIdentityByUsername(username!),
     enabled: !!username,
   })
+
+  useEffect(() => {
+    const id = result?.identity.account.id
+    if (id && id !== viewer?.id) logView('card', id, null, viewer?.id ?? null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result?.identity.account.id])
   const { data: cardPhoto } = useQuery({
     queryKey: ['card-photo', result?.identity.card?.primary_media_id],
     queryFn: () => resolveCardPhotoPath(result!.identity.card!.primary_media_id!),

@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -127,6 +127,35 @@ export type Database = {
           },
         ]
       }
+      audience_stats: {
+        Row: {
+          account_id: string
+          engagement_rate: number | null
+          followers: number | null
+          platform: Database["public"]["Enums"]["social_platform"]
+        }
+        Insert: {
+          account_id: string
+          engagement_rate?: number | null
+          followers?: number | null
+          platform: Database["public"]["Enums"]["social_platform"]
+        }
+        Update: {
+          account_id?: string
+          engagement_rate?: number | null
+          followers?: number | null
+          platform?: Database["public"]["Enums"]["social_platform"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audience_stats_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -171,6 +200,32 @@ export type Database = {
           },
         ]
       }
+      availability_days: {
+        Row: {
+          account_id: string
+          day: string
+          status: Database["public"]["Enums"]["availability_status"]
+        }
+        Insert: {
+          account_id: string
+          day: string
+          status: Database["public"]["Enums"]["availability_status"]
+        }
+        Update: {
+          account_id?: string
+          day?: string
+          status?: Database["public"]["Enums"]["availability_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_days_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_transfer_receiving_accounts: {
         Row: {
           active: boolean
@@ -203,6 +258,80 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      bookings: {
+        Row: {
+          brand_account_id: string
+          campaign_id: string | null
+          created_at: string
+          created_by: string
+          ends_on: string | null
+          id: string
+          person_account_id: string
+          rate_amount: number | null
+          rate_currency: string | null
+          starts_on: string | null
+          status: Database["public"]["Enums"]["booking_status"]
+          title: string
+        }
+        Insert: {
+          brand_account_id: string
+          campaign_id?: string | null
+          created_at?: string
+          created_by: string
+          ends_on?: string | null
+          id?: string
+          person_account_id: string
+          rate_amount?: number | null
+          rate_currency?: string | null
+          starts_on?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          title: string
+        }
+        Update: {
+          brand_account_id?: string
+          campaign_id?: string | null
+          created_at?: string
+          created_by?: string
+          ends_on?: string | null
+          id?: string
+          person_account_id?: string
+          rate_amount?: number | null
+          rate_currency?: string | null
+          starts_on?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_brand_account_id_fkey"
+            columns: ["brand_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_person_account_id_fkey"
+            columns: ["person_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       brand_collections: {
         Row: {
@@ -263,6 +392,170 @@ export type Database = {
             foreignKeyName: "brand_profiles_account_id_fkey"
             columns: ["account_id"]
             isOneToOne: true
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_applications: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          message: string | null
+          person_account_id: string
+          rate_amount: number | null
+          rate_currency: string | null
+          status: Database["public"]["Enums"]["application_status"]
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          person_account_id: string
+          rate_amount?: number | null
+          rate_currency?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          person_account_id?: string
+          rate_amount?: number | null
+          rate_currency?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_applications_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_applications_person_account_id_fkey"
+            columns: ["person_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_invitations: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          message: string | null
+          person_account_id: string
+          status: Database["public"]["Enums"]["invitation_status"]
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          person_account_id: string
+          status?: Database["public"]["Enums"]["invitation_status"]
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          person_account_id?: string
+          status?: Database["public"]["Enums"]["invitation_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_invitations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_invitations_person_account_id_fkey"
+            columns: ["person_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          application_deadline: string | null
+          brand_account_id: string
+          budget_amount: number | null
+          budget_currency: string
+          created_at: string
+          deliverables: string | null
+          description: string | null
+          ends_on: string | null
+          id: string
+          location: string | null
+          requirements: string | null
+          starts_on: string | null
+          status: Database["public"]["Enums"]["campaign_status"]
+          style: string | null
+          talent_types: Database["public"]["Enums"]["professional_role"][]
+          title: string
+          travel_required: boolean
+          updated_at: string
+          usage_rights: string | null
+        }
+        Insert: {
+          application_deadline?: string | null
+          brand_account_id: string
+          budget_amount?: number | null
+          budget_currency?: string
+          created_at?: string
+          deliverables?: string | null
+          description?: string | null
+          ends_on?: string | null
+          id?: string
+          location?: string | null
+          requirements?: string | null
+          starts_on?: string | null
+          status?: Database["public"]["Enums"]["campaign_status"]
+          style?: string | null
+          talent_types?: Database["public"]["Enums"]["professional_role"][]
+          title: string
+          travel_required?: boolean
+          updated_at?: string
+          usage_rights?: string | null
+        }
+        Update: {
+          application_deadline?: string | null
+          brand_account_id?: string
+          budget_amount?: number | null
+          budget_currency?: string
+          created_at?: string
+          deliverables?: string | null
+          description?: string | null
+          ends_on?: string | null
+          id?: string
+          location?: string | null
+          requirements?: string | null
+          starts_on?: string | null
+          status?: Database["public"]["Enums"]["campaign_status"]
+          style?: string | null
+          talent_types?: Database["public"]["Enums"]["professional_role"][]
+          title?: string
+          travel_required?: boolean
+          updated_at?: string
+          usage_rights?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_brand_account_id_fkey"
+            columns: ["brand_account_id"]
+            isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["id"]
           },
@@ -835,6 +1128,115 @@ export type Database = {
           },
         ]
       }
+      contracts: {
+        Row: {
+          booking_id: string
+          brand_accepted_at: string | null
+          cancellation_terms: string | null
+          created_at: string
+          deadline: string | null
+          deliverables: string | null
+          id: string
+          payment_amount: number | null
+          payment_currency: string | null
+          person_accepted_at: string | null
+          usage_rights: string | null
+        }
+        Insert: {
+          booking_id: string
+          brand_accepted_at?: string | null
+          cancellation_terms?: string | null
+          created_at?: string
+          deadline?: string | null
+          deliverables?: string | null
+          id?: string
+          payment_amount?: number | null
+          payment_currency?: string | null
+          person_accepted_at?: string | null
+          usage_rights?: string | null
+        }
+        Update: {
+          booking_id?: string
+          brand_accepted_at?: string | null
+          cancellation_terms?: string | null
+          created_at?: string
+          deadline?: string | null
+          deliverables?: string | null
+          id?: string
+          payment_amount?: number | null
+          payment_currency?: string | null
+          person_accepted_at?: string | null
+          usage_rights?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_participants: {
+        Row: {
+          account_id: string
+          conversation_id: string
+          last_read_at: string | null
+        }
+        Insert: {
+          account_id: string
+          conversation_id: string
+          last_read_at?: string | null
+        }
+        Update: {
+          account_id?: string
+          conversation_id?: string
+          last_read_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           company: string | null
@@ -956,6 +1358,74 @@ export type Database = {
           },
         ]
       }
+      lookbook_items: {
+        Row: {
+          lookbook_id: string
+          media_id: string
+          sort_order: number
+        }
+        Insert: {
+          lookbook_id: string
+          media_id: string
+          sort_order?: number
+        }
+        Update: {
+          lookbook_id?: string
+          media_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lookbook_items_lookbook_id_fkey"
+            columns: ["lookbook_id"]
+            isOneToOne: false
+            referencedRelation: "lookbooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lookbook_items_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lookbooks: {
+        Row: {
+          account_id: string
+          created_at: string
+          description: string | null
+          id: string
+          share_slug: string
+          title: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          share_slug: string
+          title: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          share_slug?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lookbooks_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_items: {
         Row: {
           account_id: string
@@ -1006,6 +1476,84 @@ export type Database = {
             columns: ["collection_id"]
             isOneToOne: false
             referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_product_tags: {
+        Row: {
+          id: string
+          media_id: string
+          product_id: string
+          x_position: number
+          y_position: number
+        }
+        Insert: {
+          id?: string
+          media_id: string
+          product_id: string
+          x_position?: number
+          y_position?: number
+        }
+        Update: {
+          id?: string
+          media_id?: string
+          product_id?: string
+          x_position?: number
+          y_position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_product_tags_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_product_tags_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_account_id: string
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_account_id: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_account_id_fkey"
+            columns: ["sender_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -1086,6 +1634,54 @@ export type Database = {
             columns: ["payment_id"]
             isOneToOne: false
             referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_requests: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          currency: string
+          id: string
+          marked_paid_at: string | null
+          requested_by: string
+          status: Database["public"]["Enums"]["payment_request_status"]
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          marked_paid_at?: string | null
+          requested_by: string
+          status?: Database["public"]["Enums"]["payment_request_status"]
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          marked_paid_at?: string | null
+          requested_by?: string
+          status?: Database["public"]["Enums"]["payment_request_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -1801,6 +2397,44 @@ export type Database = {
         }
         Relationships: []
       }
+      rates: {
+        Row: {
+          account_id: string
+          amount: number | null
+          currency: string
+          id: string
+          is_request_only: boolean
+          service: string
+          sort_order: number
+        }
+        Insert: {
+          account_id: string
+          amount?: number | null
+          currency?: string
+          id?: string
+          is_request_only?: boolean
+          service: string
+          sort_order?: number
+        }
+        Update: {
+          account_id?: string
+          amount?: number | null
+          currency?: string
+          id?: string
+          is_request_only?: boolean
+          service?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rates_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_goals: {
         Row: {
           created_at: string
@@ -1827,6 +2461,67 @@ export type Database = {
           target_amount?: number
         }
         Relationships: []
+      }
+      reviews: {
+        Row: {
+          collaboration_id: string
+          comment: string | null
+          communication: number | null
+          created_at: string
+          id: string
+          professionalism: number | null
+          rating: number
+          reliability: number | null
+          reviewee_account_id: string
+          reviewer_account_id: string
+        }
+        Insert: {
+          collaboration_id: string
+          comment?: string | null
+          communication?: number | null
+          created_at?: string
+          id?: string
+          professionalism?: number | null
+          rating: number
+          reliability?: number | null
+          reviewee_account_id: string
+          reviewer_account_id: string
+        }
+        Update: {
+          collaboration_id?: string
+          comment?: string | null
+          communication?: number | null
+          created_at?: string
+          id?: string
+          professionalism?: number | null
+          rating?: number
+          reliability?: number | null
+          reviewee_account_id?: string
+          reviewer_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_collaboration_id_fkey"
+            columns: ["collaboration_id"]
+            isOneToOne: false
+            referencedRelation: "collaborations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_reviewee_account_id_fkey"
+            columns: ["reviewee_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_reviewer_account_id_fkey"
+            columns: ["reviewer_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_links: {
         Row: {
@@ -1889,6 +2584,48 @@ export type Database = {
           source?: string
         }
         Relationships: []
+      }
+      view_events: {
+        Row: {
+          created_at: string
+          id: number
+          subject_account_id: string
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["view_subject"]
+          viewer_account_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          subject_account_id: string
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["view_subject"]
+          viewer_account_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          subject_account_id?: string
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["view_subject"]
+          viewer_account_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "view_events_subject_account_id_fkey"
+            columns: ["subject_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "view_events_viewer_account_id_fkey"
+            columns: ["viewer_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -2889,9 +3626,14 @@ export type Database = {
     }
     Enums: {
       account_kind: "person" | "brand"
+      application_status: "pending" | "accepted" | "declined" | "withdrawn"
       availability_status: "available" | "limited" | "unavailable"
+      booking_status: "proposed" | "confirmed" | "completed" | "cancelled"
+      campaign_status: "draft" | "open" | "closed"
       collab_status: "claimed" | "verified"
+      invitation_status: "pending" | "accepted" | "declined"
       media_kind: "image" | "video"
+      payment_request_status: "pending" | "marked_paid" | "disputed"
       professional_role:
         | "model"
         | "influencer"
@@ -2913,6 +3655,7 @@ export type Database = {
         | "website"
         | "whatsapp"
         | "other"
+      view_subject: "profile" | "card" | "catalog" | "product" | "campaign"
       visibility_level: "public" | "private"
     }
     CompositeTypes: {
@@ -3042,9 +3785,14 @@ export const Constants = {
   public: {
     Enums: {
       account_kind: ["person", "brand"],
+      application_status: ["pending", "accepted", "declined", "withdrawn"],
       availability_status: ["available", "limited", "unavailable"],
+      booking_status: ["proposed", "confirmed", "completed", "cancelled"],
+      campaign_status: ["draft", "open", "closed"],
       collab_status: ["claimed", "verified"],
+      invitation_status: ["pending", "accepted", "declined"],
       media_kind: ["image", "video"],
+      payment_request_status: ["pending", "marked_paid", "disputed"],
       professional_role: [
         "model",
         "influencer",
@@ -3068,6 +3816,7 @@ export const Constants = {
         "whatsapp",
         "other",
       ],
+      view_subject: ["profile", "card", "catalog", "product", "campaign"],
       visibility_level: ["public", "private"],
     },
   },

@@ -1,9 +1,12 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { ImageIcon } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { mediaUrl } from '@/lib/media'
+import { fetchProductTags } from '@/lib/api'
 import type { Collection, MediaItem } from '@/lib/types'
 
 export function GalleryGrid({
@@ -19,6 +22,13 @@ export function GalleryGrid({
 }) {
   const [activeCollection, setActiveCollection] = useState<string | 'all'>('all')
   const [lightbox, setLightbox] = useState<MediaItem | null>(null)
+  const [activeTagId, setActiveTagId] = useState<string | null>(null)
+
+  const { data: tags } = useQuery({
+    queryKey: ['product-tags', lightbox?.id],
+    queryFn: () => fetchProductTags(lightbox!.id),
+    enabled: !!lightbox,
+  })
 
   const visible =
     activeCollection === 'all' ? media : media.filter((m) => m.collection_id === activeCollection)
@@ -74,12 +84,36 @@ export function GalleryGrid({
           >
             <X className="size-6" />
           </button>
-          <img
-            src={mediaUrl(lightbox.storage_path)!}
-            alt={lightbox.caption ?? ''}
-            className="max-h-[85vh] max-w-full rounded-lg object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={mediaUrl(lightbox.storage_path)!}
+              alt={lightbox.caption ?? ''}
+              className="max-h-[85vh] max-w-full rounded-lg object-contain"
+            />
+            {(tags ?? []).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTagId(activeTagId === t.id ? null : t.id)}
+                className="absolute flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-signal-500 text-xs font-semibold text-ink-950 shadow"
+                style={{ left: `${t.x_position * 100}%`, top: `${t.y_position * 100}%` }}
+              >
+                €
+                {activeTagId === t.id && (
+                  <Link
+                    to={`/${t.product.brand.username}`}
+                    className="absolute top-7 w-max max-w-[10rem] whitespace-normal rounded-lg bg-ink-900 px-2.5 py-1.5 text-left text-xs text-bone-100 shadow-lg"
+                  >
+                    {t.product.name}
+                    {t.product.price_amount && (
+                      <span className="block text-bone-500">
+                        {t.product.price_amount} {t.product.price_currency}
+                      </span>
+                    )}
+                  </Link>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

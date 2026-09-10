@@ -10,7 +10,9 @@ import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { mediaUrl, uploadMedia } from '@/lib/media'
 import { fetchGallery } from '@/lib/api'
-import { Image as ImageIcon } from 'lucide-react'
+import { Image as ImageIcon, Tag } from 'lucide-react'
+import { MediaTagEditor } from './MediaTagEditor'
+import type { MediaItem } from '@/lib/types'
 
 export function GalleryScreen() {
   const { account } = useAuth()
@@ -19,6 +21,7 @@ export function GalleryScreen() {
   const [activeCollection, setActiveCollection] = useState<string | 'all' | 'unsorted'>('all')
   const [newCollectionName, setNewCollectionName] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [tagging, setTagging] = useState<MediaItem | null>(null)
 
   const { data } = useQuery({
     queryKey: ['gallery', account?.id],
@@ -130,12 +133,21 @@ export function GalleryScreen() {
             <div key={item.id} className="group relative aspect-[3/4] overflow-hidden rounded-xl bg-ink-800">
               <img src={mediaUrl(item.storage_path)!} className="h-full w-full object-cover" />
               <div className="absolute inset-0 flex flex-col justify-between bg-ink-950/0 p-1.5 opacity-0 transition-opacity group-hover:bg-ink-950/50 group-hover:opacity-100">
-                <button
-                  onClick={() => deleteMedia(item.id, item.storage_path)}
-                  className="self-end rounded-full bg-ink-950/70 p-1 text-bone-100"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
+                <div className="flex justify-end gap-1 self-end">
+                  <button
+                    onClick={() => setTagging(item)}
+                    className="rounded-full bg-ink-950/70 p-1 text-bone-100"
+                    title="Tag products"
+                  >
+                    <Tag className="size-3.5" />
+                  </button>
+                  <button
+                    onClick={() => deleteMedia(item.id, item.storage_path)}
+                    className="rounded-full bg-ink-950/70 p-1 text-bone-100"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
                 <button
                   onClick={() => togglePortfolio(item.id, item.is_portfolio)}
                   className={cn(
@@ -150,6 +162,8 @@ export function GalleryScreen() {
           ))}
         </div>
       )}
+
+      {tagging && <MediaTagEditor media={tagging} onClose={() => setTagging(null)} />}
     </AppScreen>
   )
 }

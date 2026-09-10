@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Compass, Smartphone, Home } from 'lucide-react'
+import { Compass, Smartphone, Home, Briefcase, MessageCircle } from 'lucide-react'
 import { Logo } from './Logo'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
@@ -29,6 +29,14 @@ export function AppShell() {
               <NavLink to="/discover" className={navItemClass}>
                 Discover
               </NavLink>
+              <NavLink to="/opportunities" className={navItemClass}>
+                Opportunities
+              </NavLink>
+              {account && (
+                <NavLink to="/app/messages" className={navItemClass}>
+                  Messages
+                </NavLink>
+              )}
               {account && (
                 <NavLink to="/app" className={navItemClass}>
                   My ZELM
@@ -69,6 +77,8 @@ export function AppShell() {
       <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-bone-50/8 bg-ink-950/95 py-2 backdrop-blur-md sm:hidden">
         <MobileTab to="/" icon={Home} label="Home" />
         <MobileTab to="/discover" icon={Compass} label="Discover" />
+        <MobileTab to="/opportunities" icon={Briefcase} label="Jobs" />
+        {account && <MobileTab to="/app/messages" icon={MessageCircle} label="Messages" />}
         <MobileTab to="/app" icon={Smartphone} label="My ZELM" />
       </nav>
     </div>

@@ -1,16 +1,27 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { fetchBrandCatalog, fetchCollaborations, fetchGallery, fetchIdentityByUsername, fetchPortfolio } from '@/lib/api'
+import {
+  computeReputation,
+  fetchBrandCatalog,
+  fetchCollaborations,
+  fetchGallery,
+  fetchIdentityByUsername,
+  fetchPortfolio,
+  logView,
+} from '@/lib/api'
 import { ProfileHeader, Tabs } from './ProfileHeader'
+import { ReputationRow } from './ReputationRow'
 import { GalleryGrid } from '@/features/gallery/GalleryGrid'
 import { CollaborationsList } from '@/features/collaborations/CollaborationsList'
 import { CatalogGrid } from '@/features/brand/CatalogGrid'
 import { MeasurementsPanel } from './MeasurementsPanel'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { useAuth } from '@/lib/auth'
 
 export function ProfilePage() {
   const { username } = useParams<{ username: string }>()
+  const { account: viewer } = useAuth()
   const { data: result, isLoading } = useQuery({
     queryKey: ['identity', username],
     queryFn: () => fetchIdentityByUsername(username!),
@@ -19,6 +30,19 @@ export function ProfilePage() {
 
   const accountId = result?.identity.account.id
   const isBrand = result?.kind === 'brand'
+
+  useEffect(() => {
+    if (accountId && accountId !== viewer?.id) {
+      logView('profile', accountId, null, viewer?.id ?? null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId])
+
+  const { data: reputation } = useQuery({
+    queryKey: ['reputation', accountId],
+    queryFn: () => computeReputation(accountId!),
+    enabled: !!accountId,
+  })
 
   const { data: gallery } = useQuery({
     queryKey: ['gallery', accountId],
@@ -78,6 +102,7 @@ export function ProfilePage() {
         category={result.kind === 'brand' ? result.identity.profile.category : undefined}
         socials={identity.socials}
       >
+        {reputation && <ReputationRow reputation={reputation} isBrand={isBrand} />}
         {result.kind === 'person' && result.identity.measurements && (
           <MeasurementsPanel
             measurements={result.identity.measurements}

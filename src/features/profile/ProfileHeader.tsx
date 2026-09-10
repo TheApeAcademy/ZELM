@@ -1,10 +1,14 @@
 import type { ReactNode } from 'react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Avatar } from '@/components/ui/Avatar'
 import { AvailabilityPill } from '@/components/ui/AvailabilityDot'
 import { LinkButton } from '@/components/ui/LinkButton'
+import { Button } from '@/components/ui/Button'
 import { mediaUrl } from '@/lib/media'
 import { ROLE_LABEL, SOCIAL_PLATFORM_LABEL, type Account, type AvailabilityStatus, type ProfessionalRole, type SocialLink } from '@/lib/types'
 import { useAuth } from '@/lib/auth'
+import { findOrCreateConversation } from '@/lib/api'
 
 export function ProfileHeader({
   account,
@@ -22,8 +26,20 @@ export function ProfileHeader({
   children?: ReactNode
 }) {
   const { account: viewer } = useAuth()
+  const navigate = useNavigate()
   const isSelf = viewer?.id === account.id
   const cover = mediaUrl(account.cover_path)
+  const [messaging, setMessaging] = useState(false)
+
+  async function message() {
+    if (!viewer) {
+      navigate('/login')
+      return
+    }
+    setMessaging(true)
+    const conversationId = await findOrCreateConversation(viewer.id, account.id)
+    navigate(`/app/messages/${conversationId}`)
+  }
 
   return (
     <div>
@@ -46,9 +62,16 @@ export function ProfileHeader({
                 Edit profile
               </LinkButton>
             ) : (
-              <LinkButton to={`/${account.username}/card`} size="sm">
-                View card
-              </LinkButton>
+              <>
+                {viewer && (
+                  <Button size="sm" variant="secondary" onClick={message} disabled={messaging}>
+                    Message
+                  </Button>
+                )}
+                <LinkButton to={`/${account.username}/card`} size="sm">
+                  View card
+                </LinkButton>
+              </>
             )}
           </div>
         </div>
